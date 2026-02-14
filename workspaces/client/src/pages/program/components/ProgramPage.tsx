@@ -1,13 +1,12 @@
 import { DateTime } from 'luxon';
-import { useEffect, useRef } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import Ellipsis from 'react-ellipsis-component';
 import { Flipped } from 'react-flip-toolkit';
 import { Link, Params, useNavigate, useParams } from 'react-router';
-import { useUpdate } from 'react-use';
 import invariant from 'tiny-invariant';
 
 import { createStore } from '@wsh-2025/client/src/app/createStore';
-import { Player } from '@wsh-2025/client/src/features/player/components/Player';
+import { useForceUpdate } from '@wsh-2025/client/src/features/layout/hooks/useForceUpdate';
 import { PlayerType } from '@wsh-2025/client/src/features/player/constants/player_type';
 import { useProgramById } from '@wsh-2025/client/src/features/program/hooks/useProgramById';
 import { RecommendedSection } from '@wsh-2025/client/src/features/recommended/components/RecommendedSection';
@@ -17,20 +16,15 @@ import { useTimetable } from '@wsh-2025/client/src/features/timetable/hooks/useT
 import { PlayerController } from '@wsh-2025/client/src/pages/program/components/PlayerController';
 import { usePlayerRef } from '@wsh-2025/client/src/pages/program/hooks/usePlayerRef';
 
+const LazyPlayer = lazy(async () => {
+  const mod = await import('@wsh-2025/client/src/features/player/components/Player');
+  return { default: mod.Player };
+});
+
 export const prefetch = async (store: ReturnType<typeof createStore>, { programId }: Params) => {
   invariant(programId);
-
-  const now = DateTime.now();
-  const since = now.startOf('day').toISO();
-  const until = now.endOf('day').toISO();
-
-  const program = await store.getState().features.program.fetchProgramById({ programId });
-  const channels = await store.getState().features.channel.fetchChannels();
-  const timetable = await store.getState().features.timetable.fetchTimetable({ since, until });
-  const modules = await store
-    .getState()
-    .features.recommended.fetchRecommendedModulesByReferenceId({ referenceId: programId });
-  return { channels, modules, program, timetable };
+  await store.getState().features.program.fetchProgramById({ programId });
+  return null;
 };
 
 export const ProgramPage = () => {
@@ -41,41 +35,38 @@ export const ProgramPage = () => {
   invariant(program);
 
   const timetable = useTimetable();
+  const programEndAtMs = DateTime.fromISO(program.endAt).toMillis();
   const nextProgram = timetable[program.channel.id]?.find((p) => {
-    return DateTime.fromISO(program.endAt).equals(DateTime.fromISO(p.startAt));
+    return programEndAtMs === DateTime.fromISO(p.startAt).toMillis();
   });
 
   const modules = useRecommended({ referenceId: programId });
 
   const playerRef = usePlayerRef();
 
-  const forceUpdate = useUpdate();
+  const forceUpdate = useForceUpdate();
   const navigate = useNavigate();
-  const isArchivedRef = useRef(DateTime.fromISO(program.endAt) <= DateTime.now());
-  const isBroadcastStarted = DateTime.fromISO(program.startAt) <= DateTime.now();
+  const nowMs = Date.now();
+  const programStartAtMs = DateTime.fromISO(program.startAt).toMillis();
+  const isArchived = programEndAtMs <= nowMs;
+  const isBroadcastStarted = programStartAtMs <= nowMs;
+
   useEffect(() => {
-    if (isArchivedRef.current) {
+    if (isArchived) {
       return;
     }
 
-    // 放送前であれば、放送開始になるまで画面を更新し続ける
     if (!isBroadcastStarted) {
-      let timeout = setTimeout(function tick() {
+      const timeout = setTimeout(() => {
         forceUpdate();
-        timeout = setTimeout(tick, 250);
-      }, 250);
+      }, Math.max(programStartAtMs - Date.now(), 0));
+
       return () => {
         clearTimeout(timeout);
       };
     }
 
-    // 放送中に次の番組が始まったら、画面をそのままにしつつ、情報を次の番組にする
-    let timeout = setTimeout(function tick() {
-      if (DateTime.now() < DateTime.fromISO(program.endAt)) {
-        timeout = setTimeout(tick, 250);
-        return;
-      }
-
+    const timeout = setTimeout(() => {
       if (nextProgram?.id) {
         void navigate(`/programs/${nextProgram.id}`, {
           preventScrollReset: true,
@@ -83,14 +74,14 @@ export const ProgramPage = () => {
           state: { loading: 'none' },
         });
       } else {
-        isArchivedRef.current = true;
         forceUpdate();
       }
-    }, 250);
+    }, Math.max(programEndAtMs - Date.now(), 0));
+
     return () => {
       clearTimeout(timeout);
     };
-  }, [isBroadcastStarted, nextProgram?.id]);
+  }, [forceUpdate, isArchived, isBroadcastStarted, navigate, nextProgram?.id, programEndAtMs, programStartAtMs]);
 
   return (
     <>
@@ -99,9 +90,18 @@ export const ProgramPage = () => {
       <div className="px-[24px] py-[48px]">
         <Flipped stagger flipId={`program-${program.id}`}>
           <div className="m-auto mb-[16px] max-w-[1280px] outline outline-[1px] outline-[#212121]">
-            {isArchivedRef.current ? (
+            {isArchived ? (
               <div className="relative size-full">
-                <img alt="" className="h-auto w-full" src={program.thumbnailUrl} />
+                <img
+                  alt=""
+                  className="h-auto w-full"
+                  decoding="async"
+                  fetchPriority="high"
+                  height={720}
+                  loading="eager"
+                  src={program.thumbnailUrl}
+                  width={1280}
+                />
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#00000077] p-[24px]">
                   <p className="mb-[32px] text-[24px] font-bold text-[#ffffff]">この番組は放送が終了しました</p>
@@ -115,19 +115,43 @@ export const ProgramPage = () => {
               </div>
             ) : isBroadcastStarted ? (
               <div className="relative size-full">
-                <Player
-                  className="size-full"
-                  playerRef={playerRef}
-                  playerType={PlayerType.VideoJS}
-                  playlistUrl={`/streams/channel/${program.channel.id}/playlist.m3u8`}
-                />
+                <Suspense
+                  fallback={
+                    <img
+                      alt=""
+                      className="h-auto w-full"
+                      decoding="async"
+                      fetchPriority="high"
+                      height={720}
+                      loading="eager"
+                      src={program.thumbnailUrl}
+                      width={1280}
+                    />
+                  }
+                >
+                  <LazyPlayer
+                    className="size-full"
+                    playerRef={playerRef}
+                    playerType={PlayerType.VideoJS}
+                    playlistUrl={`/streams/channel/${program.channel.id}/playlist.m3u8`}
+                  />
+                </Suspense>
                 <div className="absolute inset-x-0 bottom-0">
                   <PlayerController />
                 </div>
               </div>
             ) : (
               <div className="relative size-full">
-                <img alt="" className="h-auto w-full" src={program.thumbnailUrl} />
+                <img
+                  alt=""
+                  className="h-auto w-full"
+                  decoding="async"
+                  fetchPriority="high"
+                  height={720}
+                  loading="eager"
+                  src={program.thumbnailUrl}
+                  width={1280}
+                />
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#00000077] p-[24px]">
                   <p className="mb-[32px] text-[24px] font-bold text-[#ffffff]">

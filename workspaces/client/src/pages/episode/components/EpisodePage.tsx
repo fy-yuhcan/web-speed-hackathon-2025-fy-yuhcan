@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import Ellipsis from 'react-ellipsis-component';
 import { Flipped } from 'react-flip-toolkit';
 import { Params, useParams } from 'react-router';
@@ -9,7 +9,6 @@ import { useAuthActions } from '@wsh-2025/client/src/features/auth/hooks/useAuth
 import { useAuthUser } from '@wsh-2025/client/src/features/auth/hooks/useAuthUser';
 import { useEpisodeById } from '@wsh-2025/client/src/features/episode/hooks/useEpisodeById';
 import { AspectRatio } from '@wsh-2025/client/src/features/layout/components/AspectRatio';
-import { Player } from '@wsh-2025/client/src/features/player/components/Player';
 import { PlayerType } from '@wsh-2025/client/src/features/player/constants/player_type';
 import { RecommendedSection } from '@wsh-2025/client/src/features/recommended/components/RecommendedSection';
 import { useRecommended } from '@wsh-2025/client/src/features/recommended/hooks/useRecommended';
@@ -17,13 +16,15 @@ import { SeriesEpisodeList } from '@wsh-2025/client/src/features/series/componen
 import { PlayerController } from '@wsh-2025/client/src/pages/episode/components/PlayerController';
 import { usePlayerRef } from '@wsh-2025/client/src/pages/episode/hooks/usePlayerRef';
 
+const LazyPlayer = lazy(async () => {
+  const mod = await import('@wsh-2025/client/src/features/player/components/Player');
+  return { default: mod.Player };
+});
+
 export const prefetch = async (store: ReturnType<typeof createStore>, { episodeId }: Params) => {
   invariant(episodeId);
-  const episode = await store.getState().features.episode.fetchEpisodeById({ episodeId });
-  const modules = await store
-    .getState()
-    .features.recommended.fetchRecommendedModulesByReferenceId({ referenceId: episodeId });
-  return { episode, modules };
+  await store.getState().features.episode.fetchEpisodeById({ episodeId });
+  return null;
 };
 
 export const EpisodePage = () => {
@@ -51,7 +52,16 @@ export const EpisodePage = () => {
           <div className="m-auto mb-[16px] h-auto w-full max-w-[1280px] outline outline-[1px] outline-[#212121]">
             {isSignInRequired ? (
               <div className="relative size-full">
-                <img alt="" className="h-auto w-full" src={episode.thumbnailUrl} />
+                <img
+                  alt=""
+                  className="h-auto w-full"
+                  decoding="async"
+                  fetchPriority="high"
+                  height={720}
+                  loading="eager"
+                  src={episode.thumbnailUrl}
+                  width={1280}
+                />
 
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#00000077] p-[24px]">
                   <p className="mb-[32px] text-[24px] font-bold text-[#ffffff]">
@@ -74,7 +84,12 @@ export const EpisodePage = () => {
                       <img
                         alt=""
                         className="size-full place-self-stretch [grid-area:1/-1]"
+                        decoding="async"
+                        fetchPriority="high"
+                        height={720}
+                        loading="eager"
                         src={episode.thumbnailUrl}
+                        width={1280}
                       />
                       <div className="size-full place-self-stretch bg-[#00000077] [grid-area:1/-1]" />
                       <div className="i-line-md:loading-twotone-loop size-[48px] place-self-center text-[#ffffff] [grid-area:1/-1]" />
@@ -83,7 +98,7 @@ export const EpisodePage = () => {
                 }
               >
                 <div className="relative size-full">
-                  <Player
+                  <LazyPlayer
                     className="size-full"
                     playerRef={playerRef}
                     playerType={PlayerType.HlsJS}

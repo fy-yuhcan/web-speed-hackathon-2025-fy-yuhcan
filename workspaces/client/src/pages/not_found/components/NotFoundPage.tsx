@@ -1,18 +1,10 @@
 import { createStore } from '@wsh-2025/client/src/app/createStore';
-import { RecommendedSection } from '@wsh-2025/client/src/features/recommended/components/RecommendedSection';
-import { useRecommended } from '@wsh-2025/client/src/features/recommended/hooks/useRecommended';
 
-export const prefetch = async (store: ReturnType<typeof createStore>) => {
-  const modules = await store
-    .getState()
-    .features.recommended.fetchRecommendedModulesByReferenceId({ referenceId: 'error' });
-  return { modules };
+export const prefetch = async (_store: ReturnType<typeof createStore>) => {
+  return null;
 };
 
 export const NotFoundPage = () => {
-  const modules = useRecommended({ referenceId: 'error' });
-  const module = modules.at(0);
-
   return (
     <>
       <title>見つかりません - AremaTV</title>
@@ -21,9 +13,17 @@ export const NotFoundPage = () => {
         <section className="mb-[32px] flex w-full flex-col items-center justify-center gap-y-[20px]">
           <h1 className="text-[32px] font-bold text-[#ffffff]">ページが見つかりませんでした</h1>
           <p>あなたが見ようとしたページは、残念ながら見つけられませんでした。</p>
-          <img alt="" className="h-auto w-[640px]" src="/public/animations/001.gif" />
+          <img
+            alt=""
+            className="h-auto w-[640px]"
+            decoding="async"
+            fetchPriority="high"
+            height={270}
+            loading="eager"
+            src="/public/animations/001.webp"
+            width={480}
+          />
         </section>
-        <section>{module != null ? <RecommendedSection module={module} /> : null}</section>
       </div>
     </>
   );

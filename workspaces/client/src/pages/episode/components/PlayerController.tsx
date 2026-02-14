@@ -2,14 +2,19 @@ import * as Slider from '@radix-ui/react-slider';
 import { StandardSchemaV1 } from '@standard-schema/spec';
 import * as schema from '@wsh-2025/schema/src/api/schema';
 import { Duration } from 'luxon';
+import { Suspense, lazy, useState } from 'react';
 import invariant from 'tiny-invariant';
 
 import { Hoverable } from '@wsh-2025/client/src/features/layout/components/Hoverable';
-import { SeekThumbnail } from '@wsh-2025/client/src/pages/episode/components/SeekThumbnail';
 import { useCurrentTime } from '@wsh-2025/client/src/pages/episode/hooks/useCurrentTime';
 import { useDuration } from '@wsh-2025/client/src/pages/episode/hooks/useDuration';
 import { useMuted } from '@wsh-2025/client/src/pages/episode/hooks/useMuted';
 import { usePlaying } from '@wsh-2025/client/src/pages/episode/hooks/usePlaying';
+
+const LazySeekThumbnail = lazy(async () => {
+  const mod = await import('@wsh-2025/client/src/pages/episode/components/SeekThumbnail');
+  return { default: mod.SeekThumbnail };
+});
 
 interface Props {
   episode: StandardSchemaV1.InferOutput<typeof schema.getEpisodeByIdResponse>;
@@ -20,15 +25,28 @@ export const PlayerController = ({ episode }: Props) => {
   const [currentTime, updateCurrentTime] = useCurrentTime();
   const [playing, togglePlaying] = usePlaying();
   const [muted, toggleMuted] = useMuted();
+  const [showSeekThumbnail, setShowSeekThumbnail] = useState(false);
 
   return (
     <div className="relative h-[120px]">
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#212121] to-transparent" />
 
       <div className="absolute inset-x-0 bottom-0 px-[12px]">
-        <div className="group relative size-full">
+        <div
+          className="group relative size-full"
+          onPointerEnter={() => {
+            setShowSeekThumbnail(true);
+          }}
+          onPointerLeave={() => {
+            setShowSeekThumbnail(false);
+          }}
+        >
           <div className="pointer-events-none relative size-full opacity-0 group-hover:opacity-100">
-            <SeekThumbnail episode={episode} />
+            {showSeekThumbnail ? (
+              <Suspense fallback={null}>
+                <LazySeekThumbnail episode={episode} />
+              </Suspense>
+            ) : null}
           </div>
 
           <Slider.Root

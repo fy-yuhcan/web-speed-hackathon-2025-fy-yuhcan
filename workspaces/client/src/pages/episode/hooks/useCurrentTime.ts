@@ -1,9 +1,12 @@
 import { useStore } from '@wsh-2025/client/src/app/StoreContext';
 
 export function useCurrentTime() {
-  const state = useStore((s) => s);
+  const currentTime = useStore((s) => s.pages.episode.currentTime);
+  const updateCurrentTime = useStore((s) => s.pages.episode.updateCurrentTime);
+
   const update = (second: number): void => {
-    state.pages.episode.updateCurrentTime(second);
+    updateCurrentTime(second);
   };
-  return [state.pages.episode.currentTime, update] as const;
+
+  return [currentTime, update] as const;
 }
