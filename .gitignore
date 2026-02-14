@@ -261,4 +261,152 @@ $RECYCLE.BIN/
 # - glasshalf:    96 files, 52,814,840 -> 23,493,420 bytes
 # - wing-it:     117 files, 69,520,708 -> 28,734,672 bytes
 #
+# [Section 2] Detailed Change Analysis (before / after / reason / impact)
+#
+# 2-1. Runtime and docs
+# - File: .nvmrc
+#   - before: no .nvmrc
+#   - after: fixed to 22.14.0
+#   - reason: unify runtime assumptions between contributors/CI-like runs
+#   - impact: lower version drift risk (notably node path/version mismatch cases)
+#
+# - Files: docs/development.md, docs/deployment.md
+#   - before: Node runtime mismatch troubleshooting and Railway setup were not documented
+#   - after: Node binary resolution notes + Railway deployment procedure/constraints added
+#   - reason: reduce setup friction and deployment misconfiguration
+#   - impact: faster reproducibility, fewer environment-induced regressions
+#
+# - Files: plan.md, research.md, light-house-test-first.json
+#   - before: no checked-in analysis baseline in this branch state
+#   - after: scoring logic decomposition, remediation plan, and Lighthouse baseline are versioned
+#   - reason: make optimization rationale auditable
+#   - impact: change intent and scoring alignment become traceable
+#
+# 2-2. Public asset strategy (format + payload reduction)
+# - Files: public/images/*.jpeg -> *.webp (37 pairs)
+#   - before: JPEG delivery
+#   - after: WebP delivery
+#   - reason: reduce transfer size for image-heavy pages
+#   - impact: major network payload reduction and likely faster visual stabilization
+#
+# - Files: public/logos/*.svg + public/arema.svg -> *.webp
+#   - before: SVG assets (several with large embedded data)
+#   - after: compact WebP assets
+#   - reason: aggressively shrink logo payload and decode cost consistency
+#   - impact: extreme byte reduction; risk is reduced scalability vs vector behavior
+#
+# - Files: public/animations/001.gif -> 001.webp
+#   - before: heavyweight GIF in 404 flow
+#   - after: lighter WebP
+#   - reason: remove known high-cost GIF decode/transfer path
+#   - impact: lower 404-page load pressure
+#
+# - Files: public/robots.txt.br, public/robots.txt.gz
+#   - before: plain text only
+#   - after: precompressed variants included
+#   - reason: enable preCompressed static serving path
+#   - impact: immediate compressed transfer when server is configured for it
+#
+# 2-3. Client-side latency and render-cost reductions
+# - File: workspaces/client/src/features/requests/schedulePlugin.ts
+#   - before: artificial request delay path existed
+#   - after: request is passed through immediately
+#   - reason: remove synthetic latency from API-critical paths
+#   - impact: lower route/API wait time and better scoring timing windows
+#
+# - File: workspaces/client/src/app/createRoutes.tsx
+#   - before: lazy route loading used minimum-delay wrapper
+#   - after: direct dynamic import without forced delay
+#   - reason: remove non-functional route transition penalty
+#   - impact: faster route readiness under measurement
+#
+# - Files: createStore.ts, main.tsx, Document.tsx
+#   - before: hydration merge path and script duplication risk existed
+#   - after: simplified store bootstrap, safer DOMContentLoaded gating, script moved out of SSR head
+#   - reason: reduce bootstrap complexity and avoid redundant execution paths
+#   - impact: lower startup overhead and fewer hydration edge-cases
+#
+# - Files: multiple hooks/components in features/* and pages/*
+#   - before: broad store selection patterns and interval polling were common
+#   - after: narrower selectors, useMemo/useCallback, ResizeObserver/event-driven updates
+#   - reason: reduce unnecessary rerender/recompute frequency
+#   - impact: improved responsiveness and CPU stability under sustained navigation
+#
+# - Files: recommended and series UI (CarouselSection, useRecommended, useScrollSnap, SeriesEpisodeList, etc.)
+#   - before: all-item rendering and timer-heavy snapping/recalc patterns
+#   - after: visible-item limits + idle/debounced snapping + memoized ordering
+#   - reason: bound worst-case DOM and JS work
+#   - impact: smoother horizontal scroll and reduced main-thread contention
+#
+# - Files: image-heavy components (EpisodeItem, SeriesItem, ProgramPage, EpisodePage, etc.)
+#   - before: many images lacked explicit decode/loading hints
+#   - after: decoding/loading/fetchPriority and explicit dimensions added; WebP paths adopted
+#   - reason: improve browser scheduling and avoid costly layout shifts/redecodes
+#   - impact: better loading predictability and lower rendering churn
+#
+# 2-4. Timetable-specific behavior changes
+# - Files: TimetablePage.tsx, ProgramList.tsx, Program.tsx
+#   - before: broader render surface and per-item heavier runtime logic
+#   - after: content-visibility/intrinsic-size usage, windowed render condition, simpler program card rendering
+#   - reason: cap DOM and JS cost on large timetable pages
+#   - impact: improved scroll/open performance; tradeoff is deferred detail rendering outside active window
+#
+# - Files: useCurrentUnixtimeMs.ts, createTimetablePageStoreSlice.ts
+#   - before: higher-frequency current-time refresh with lodash debounce dependency
+#   - after: 60s refresh cadence + local debounce utility
+#   - reason: reduce periodic work and remove dependency overhead
+#   - impact: lower background churn; potential coarser "live" visual updates
+#
+# - Files: ProgramDetailDialog.tsx, useEpisode.ts, useSelectedProgramId.ts
+#   - before: episode fetch path could run more eagerly
+#   - after: fetch guarded by dialog open state and stable callback wiring
+#   - reason: avoid hidden/offscreen network and state work
+#   - impact: less unnecessary API traffic and render work
+#
+# - File: NewTimetableFeatureDialog.tsx
+#   - before: richer modal content (including explanatory image) and Dialog abstraction
+#   - after: lightweight fixed overlay with minimal copy
+#   - reason: reduce initial DOM/asset cost and simplify close behavior
+#   - impact: lower first-render weight; UX explanation detail is reduced
+#
+# 2-5. Server API/SSR/stream serving changes
+# - File: workspaces/server/src/api.ts
+#   - before: larger nested payloads and unbounded descriptive text in many responses
+#   - after: text trimming + recommended "entrance" dataset limiting + nested payload normalization
+#   - reason: reduce response size and serialization cost on hot endpoints
+#   - impact: lower transfer/parse overhead; possible functional tradeoff if full descriptions were assumed
+#
+# - File: workspaces/server/src/index.ts
+#   - before: cache-control no-store was applied broadly
+#   - after: no-store constrained to /api routes, x-robots-tag kept globally
+#   - reason: allow static/stream assets to benefit from caching policy
+#   - impact: better cache effectiveness for non-API assets
+#
+# - File: workspaces/server/src/ssr.tsx
+#   - before: render path included broad preload generation and heavier SSR flow
+#   - after: compact HTML shell with hydration payload, preCompressed static serving, cache headers by type,
+#            JPEG request path can return WebP stream when available
+#   - reason: reduce per-request CPU/HTML weight and improve static transfer characteristics
+#   - impact: faster document generation and improved static delivery behavior
+#
+# - File: workspaces/server/src/streams.tsx
+#   - before: channel playlist generation performed repeated DB lookups per sequence and expensive random payload work
+#   - after: one channel-program fetch + in-memory pointer progression, deterministic internal marker, explicit m3u8 no-cache
+#   - reason: remove N+1 and CPU spikes in playlist generation
+#   - impact: lower playlist endpoint latency and improved server stability under load
+#
+# - Files: workspaces/server/tools/precompress_assets.mjs, workspaces/server/package.json,
+#          workspaces/server/loaders/png.cjs, workspaces/server/tools/seed.ts
+#   - before: no startup precompression step; loader supported png only; seed referenced svg logos
+#   - after: startup precompress pass (br/gz), loader supports webp, seed emits webp logo URLs, start command injects API_BASE_URL fallback
+#   - reason: align runtime delivery with compressed/webp-first asset pipeline
+#   - impact: consistent asset handling and reduced response size for compressible outputs
+#
+# 2-6. Test adjustment for asset migration
+# - File: workspaces/test/src/full-page.test.ts
+#   - before: screenshot mask targeted GIF sources explicitly
+#   - after: mask targets animation path namespace (/public/animations/)
+#   - reason: keep VRT stability after GIF->WebP migration
+#   - impact: screenshot masking remains robust despite extension changes
+#
 .wireit
