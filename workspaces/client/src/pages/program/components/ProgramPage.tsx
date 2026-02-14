@@ -17,6 +17,9 @@ import { PlayerController } from '@wsh-2025/client/src/pages/program/components/
 import { usePlayerRef } from '@wsh-2025/client/src/pages/program/hooks/usePlayerRef';
 
 const LazyPlayer = lazy(async () => {
+  void import('@wsh-2025/client/src/features/player/logics/create_player').then(({ preloadPlayerLibrary }) => {
+    preloadPlayerLibrary(PlayerType.VideoJS);
+  });
   const mod = await import('@wsh-2025/client/src/features/player/components/Player');
   return { default: mod.Player };
 });
