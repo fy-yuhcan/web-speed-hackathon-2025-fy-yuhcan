@@ -53,6 +53,9 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
   });
 
   const api = app.withTypeProvider<FastifyZodOpenApiTypeProvider>();
+  const trimText = (text: string, maxLength: number): string => {
+    return text.length <= maxLength ? text : `${text.slice(0, maxLength)}…`;
+  };
 
   /* eslint-disable sort/object-properties */
   api.route({
@@ -184,7 +187,19 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
           },
         },
       });
-      return reply.code(200).send(episodes);
+      const normalizedEpisodes = episodes.map((episode) => ({
+        ...episode,
+        description: trimText(episode.description, 160),
+        series: {
+          ...episode.series,
+          description: trimText(episode.series.description, 120),
+          episodes: episode.series.episodes.map((seriesEpisode) => ({
+            ...seriesEpisode,
+            description: trimText(seriesEpisode.description, 96),
+          })),
+        },
+      }));
+      return reply.code(200).send(normalizedEpisodes);
     },
   });
 
@@ -226,7 +241,19 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       if (episode == null) {
         return reply.code(404).send();
       }
-      return reply.code(200).send(episode);
+      const normalizedEpisode = {
+        ...episode,
+        description: trimText(episode.description, 160),
+        series: {
+          ...episode.series,
+          description: trimText(episode.series.description, 120),
+          episodes: episode.series.episodes.map((seriesEpisode) => ({
+            ...seriesEpisode,
+            description: trimText(seriesEpisode.description, 96),
+          })),
+        },
+      };
+      return reply.code(200).send(normalizedEpisode);
     },
   });
 
@@ -265,13 +292,18 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
             orderBy(episode, { asc }) {
               return asc(episode.order);
             },
-            with: {
-              series: true,
-            },
           },
         },
       });
-      return reply.code(200).send(series);
+      const normalizedSeries = series.map((item) => ({
+        ...item,
+        description: trimText(item.description, 120),
+        episodes: item.episodes.map((seriesEpisode) => ({
+          ...seriesEpisode,
+          description: trimText(seriesEpisode.description, 96),
+        })),
+      }));
+      return reply.code(200).send(normalizedSeries);
     },
   });
 
@@ -303,16 +335,21 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
             orderBy(episode, { asc }) {
               return asc(episode.order);
             },
-            with: {
-              series: true,
-            },
           },
         },
       });
       if (series == null) {
         return reply.code(404).send();
       }
-      return reply.code(200).send(series);
+      const normalizedSeries = {
+        ...series,
+        description: trimText(series.description, 120),
+        episodes: series.episodes.map((seriesEpisode) => ({
+          ...seriesEpisode,
+          description: trimText(seriesEpisode.description, 96),
+        })),
+      };
+      return reply.code(200).send(normalizedSeries);
     },
   });
 
@@ -348,7 +385,11 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
           );
         },
       });
-      return reply.code(200).send(programs);
+      const normalizedPrograms = programs.map((program) => ({
+        ...program,
+        description: trimText(program.description, 120),
+      }));
+      return reply.code(200).send(normalizedPrograms);
     },
   });
 
@@ -399,7 +440,23 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
           },
         },
       });
-      return reply.code(200).send(programs);
+      const normalizedPrograms = programs.map((program) => ({
+        ...program,
+        description: trimText(program.description, 120),
+        episode: {
+          ...program.episode,
+          description: trimText(program.episode.description, 160),
+          series: {
+            ...program.episode.series,
+            description: trimText(program.episode.series.description, 120),
+            episodes: program.episode.series.episodes.map((seriesEpisode) => ({
+              ...seriesEpisode,
+              description: trimText(seriesEpisode.description, 96),
+            })),
+          },
+        },
+      }));
+      return reply.code(200).send(normalizedPrograms);
     },
   });
 
@@ -446,7 +503,23 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       if (program == null) {
         return reply.code(404).send();
       }
-      return reply.code(200).send(program);
+      const normalizedProgram = {
+        ...program,
+        description: trimText(program.description, 120),
+        episode: {
+          ...program.episode,
+          description: trimText(program.episode.description, 160),
+          series: {
+            ...program.episode.series,
+            description: trimText(program.episode.series.description, 120),
+            episodes: program.episode.series.episodes.map((seriesEpisode) => ({
+              ...seriesEpisode,
+              description: trimText(seriesEpisode.description, 96),
+            })),
+          },
+        },
+      };
+      return reply.code(200).send(normalizedProgram);
     },
   });
 
@@ -468,8 +541,12 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
     } satisfies FastifyZodOpenApiSchema,
     handler: async function getRecommendedModules(req, reply) {
       const database = getDatabase();
+      const isEntrance = req.params.referenceId === 'entrance';
+      const moduleLimit = isEntrance ? 2 : undefined;
+      const itemLimit = isEntrance ? 6 : undefined;
 
       const modules = await database.query.recommendedModule.findMany({
+        ...(moduleLimit != null ? { limit: moduleLimit } : {}),
         orderBy(module, { asc }) {
           return asc(module.order);
         },
@@ -478,37 +555,49 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
         },
         with: {
           items: {
+            ...(itemLimit != null ? { limit: itemLimit } : {}),
             orderBy(item, { asc }) {
               return asc(item.order);
             },
             with: {
-              series: {
-                with: {
-                  episodes: {
-                    orderBy(episode, { asc }) {
-                      return asc(episode.order);
-                    },
-                  },
-                },
-              },
+              series: true,
               episode: {
                 with: {
-                  series: {
-                    with: {
-                      episodes: {
-                        orderBy(episode, { asc }) {
-                          return asc(episode.order);
-                        },
-                      },
-                    },
-                  },
+                  series: true,
                 },
               },
             },
           },
         },
       });
-      return reply.code(200).send(modules);
+      const normalizedModules = modules.map((module) => ({
+        ...module,
+        items: module.items.map((item) => ({
+          ...item,
+          series:
+            item.series == null
+              ? null
+              : {
+                  ...item.series,
+                  description: '',
+                  episodes: [],
+                },
+          episode:
+            item.episode == null
+              ? null
+              : {
+                  ...item.episode,
+                  description: trimText(item.episode.description, 96),
+                  series: {
+                    ...item.episode.series,
+                    description: '',
+                    episodes: [],
+                  },
+                },
+        })),
+      }));
+
+      return reply.code(200).send(normalizedModules);
     },
   });
 
