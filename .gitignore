@@ -218,4 +218,47 @@ $RECYCLE.BIN/
 # End of https://www.toptal.com/developers/gitignore/api/node,linux,macos,windows
 
 # Wireit
+#
+# =============================================================================
+# CHANGE REPORT (generated before commit)
+# Date: 2026-02-14
+# Scope: git diff HEAD (staged + unstaged)
+# =============================================================================
+#
+# [Section 1] Global Snapshot
+# - Total changed files: 508
+#   - Modified: 390
+#   - Added: 66
+#   - Deleted: 52
+# - Shortstat: 20237 insertions, 798 deletions
+# - Unstaged-only delta: 9 files / 130 insertions / 125 deletions
+#
+# Top-level distribution:
+# - workspaces/server: 324 files
+# - public: 104 files
+# - workspaces/client: 72 files
+# - docs: 2 files
+# - root docs/config: 6 files (.nvmrc, plan.md, research.md, light-house-test-first.json, pnpm-lock.yaml, etc.)
+# - workspaces/test: 1 file
+#
+# Quantified asset-size impact (HEAD blobs vs working tree files):
+# - Raster assets (public/images + public/animations + timetable feature image):
+#   - before: 47,787,678 bytes
+#   - after:   3,336,384 bytes
+#   - reduction: 93.02%
+# - Logo assets (public/logos + public/arema):
+#   - before: 36,241,231 bytes
+#   - after:      15,454 bytes
+#   - reduction: 99.96%
+# - Stream chunk modules (workspaces/server/streams, 316 files):
+#   - before: 196,150,364 bytes
+#   - after:   76,269,532 bytes
+#   - reduction: 61.12%
+#
+# Stream-family breakdown:
+# - caminandes2:  73 files, 57,355,980 -> 18,781,576 bytes
+# - dailydweebs:  30 files, 16,458,836 ->  5,259,864 bytes
+# - glasshalf:    96 files, 52,814,840 -> 23,493,420 bytes
+# - wing-it:     117 files, 69,520,708 -> 28,734,672 bytes
+#
 .wireit
