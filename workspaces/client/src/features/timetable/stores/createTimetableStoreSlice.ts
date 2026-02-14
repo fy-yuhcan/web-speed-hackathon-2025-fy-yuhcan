@@ -1,6 +1,6 @@
 import { lens } from '@dhmk/zustand-lens';
 import { StandardSchemaV1 } from '@standard-schema/spec';
-import * as schema from '@wsh-2025/schema/src/api/schema';
+import type * as schema from '@wsh-2025/schema/src/api/schema';
 import { ArrayValues } from 'type-fest';
 
 import { timetableService } from '@wsh-2025/client/src/features/timetable/services/timetableService';

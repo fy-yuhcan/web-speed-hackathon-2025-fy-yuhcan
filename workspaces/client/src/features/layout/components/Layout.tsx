@@ -1,11 +1,8 @@
 import classNames from 'classnames';
-import { ReactNode, useEffect, useState } from 'react';
+import { lazy, ReactNode, Suspense, useEffect, useState } from 'react';
 import { Flipper } from 'react-flip-toolkit';
 import { Link, useLocation, useNavigation } from 'react-router';
 
-import { SignInDialog } from '@wsh-2025/client/src/features/auth/components/SignInDialog';
-import { SignOutDialog } from '@wsh-2025/client/src/features/auth/components/SignOutDialog';
-import { SignUpDialog } from '@wsh-2025/client/src/features/auth/components/SignUpDialog';
 import { AuthDialogType } from '@wsh-2025/client/src/features/auth/constants/auth_dialog_type';
 import { useAuthActions } from '@wsh-2025/client/src/features/auth/hooks/useAuthActions';
 import { useAuthDialogType } from '@wsh-2025/client/src/features/auth/hooks/useAuthDialogType';
@@ -15,6 +12,22 @@ import { Loading } from '@wsh-2025/client/src/features/layout/components/Loading
 interface Props {
   children: ReactNode;
 }
+
+const SignInDialogLazy = lazy(() =>
+  import('@wsh-2025/client/src/features/auth/components/SignInDialog').then(({ SignInDialog }) => ({
+    default: SignInDialog,
+  })),
+);
+const SignUpDialogLazy = lazy(() =>
+  import('@wsh-2025/client/src/features/auth/components/SignUpDialog').then(({ SignUpDialog }) => ({
+    default: SignUpDialog,
+  })),
+);
+const SignOutDialogLazy = lazy(() =>
+  import('@wsh-2025/client/src/features/auth/components/SignOutDialog').then(({ SignOutDialog }) => ({
+    default: SignOutDialog,
+  })),
+);
 
 export const Layout = ({ children }: Props) => {
   const navigation = useNavigation();
@@ -118,17 +131,29 @@ export const Layout = ({ children }: Props) => {
         ) : null}
       </div>
 
-      <SignInDialog
-        isOpen={authDialogType === AuthDialogType.SignIn}
-        onClose={authActions.closeDialog}
-        onOpenSignUp={authActions.openSignUpDialog}
-      />
-      <SignUpDialog
-        isOpen={authDialogType === AuthDialogType.SignUp}
-        onClose={authActions.closeDialog}
-        onOpenSignIn={authActions.openSignInDialog}
-      />
-      <SignOutDialog isOpen={authDialogType === AuthDialogType.SignOut} onClose={authActions.closeDialog} />
+      {authDialogType === AuthDialogType.SignIn ? (
+        <Suspense fallback={null}>
+          <SignInDialogLazy
+            isOpen
+            onClose={authActions.closeDialog}
+            onOpenSignUp={authActions.openSignUpDialog}
+          />
+        </Suspense>
+      ) : null}
+      {authDialogType === AuthDialogType.SignUp ? (
+        <Suspense fallback={null}>
+          <SignUpDialogLazy
+            isOpen
+            onClose={authActions.closeDialog}
+            onOpenSignIn={authActions.openSignInDialog}
+          />
+        </Suspense>
+      ) : null}
+      {authDialogType === AuthDialogType.SignOut ? (
+        <Suspense fallback={null}>
+          <SignOutDialogLazy isOpen onClose={authActions.closeDialog} />
+        </Suspense>
+      ) : null}
     </>
   );
 };

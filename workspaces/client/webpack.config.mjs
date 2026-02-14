@@ -1,6 +1,10 @@
 import path from 'node:path';
+import { createRequire } from 'node:module';
 
 import webpack from 'webpack';
+
+const require = createRequire(import.meta.url);
+const reactRouterDir = path.dirname(require.resolve('react-router/package.json'));
 
 /** @type {import('webpack').Configuration} */
 const config = {
@@ -65,6 +69,7 @@ const config = {
     alias: {
       '@ffmpeg/core$': path.resolve(import.meta.dirname, 'node_modules', '@ffmpeg/core/dist/umd/ffmpeg-core.js'),
       '@ffmpeg/core/wasm$': path.resolve(import.meta.dirname, 'node_modules', '@ffmpeg/core/dist/umd/ffmpeg-core.wasm'),
+      'react-router$': path.resolve(reactRouterDir, 'dist/production/index.mjs'),
     },
     extensions: ['.js', '.cjs', '.mjs', '.ts', '.cts', '.mts', '.tsx', '.jsx'],
   },

@@ -1,6 +1,6 @@
 import * as Slider from '@radix-ui/react-slider';
 import { StandardSchemaV1 } from '@standard-schema/spec';
-import * as schema from '@wsh-2025/schema/src/api/schema';
+import type * as schema from '@wsh-2025/schema/src/api/schema';
 import { Duration } from 'luxon';
 import { Suspense, lazy, useState } from 'react';
 import invariant from 'tiny-invariant';

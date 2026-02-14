@@ -17,3 +17,7 @@ declare module '*?arraybuffer' {
   const value: ArrayBuffer;
   export = value;
 }
+
+declare module '@videojs/http-streaming';
+
+declare module 'view-transitions-polyfill';

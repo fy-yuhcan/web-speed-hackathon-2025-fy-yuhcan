@@ -1,3 +1,6 @@
 import 'core-js';
-import 'view-transitions-polyfill';
 import 'setimmediate';
+
+if (!('startViewTransition' in document)) {
+  void import('view-transitions-polyfill');
+}
