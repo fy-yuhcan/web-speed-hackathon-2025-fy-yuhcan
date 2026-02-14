@@ -16,6 +16,24 @@
      pnpm install
      ```
 
+### Node.js バージョンが想定とずれる場合
+
+`node -v` が `v22.14.0` に見えていても、実行コンテキストによっては別の `node` バイナリ（例: `/usr/local/bin/node`）が先に解決され、`v20.16.0` になることがあります。
+
+確認コマンド:
+
+- ```bash
+  which -a node
+  node -v
+  ```
+
+このリポジトリは `.node-version`（nodenv）と `.nvmrc`（nvm）で `22.14.0` を固定しています。`nvm` 利用時は次を実行してください。
+
+- ```bash
+  nvm install
+  nvm use
+  ```
+
 ### ビルド・起動
 
 1. サーバーを起動します
