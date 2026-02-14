@@ -556,4 +556,76 @@ $RECYCLE.BIN/
 # - M workspaces/client/src/pages/timetable/stores/createTimetablePageStoreSlice.ts
 # - M workspaces/server/package.json
 #
+# [Section 4] Risk Assessment and Verification Priorities
+#
+# R1. API payload truncation compatibility
+# - before: clients could receive full descriptions and deeper nested payloads
+# - after: multiple endpoints trim text and flatten/remove nested details for recommended payloads
+# - impact risk: UI or tests expecting full text/deep nested structure may regress
+# - priority checks:
+#   - /api/episodes, /api/series, /api/programs, /api/recommended/:referenceId response-shape and UX rendering
+#
+# R2. Timetable card media visibility threshold
+# - before: card image visibility depended on measured title/image height logic
+# - after: visibility gate is static (`IMAGE_VISIBLE_MIN_HEIGHT = 10000`)
+# - impact risk: program thumbnails in timetable cards may effectively never render
+# - priority checks:
+#   - timetable card visual parity and detail discoverability
+#
+# R3. Refresh cadence changes for "now" dependent UI
+# - before: current time refresh happened frequently (sub-second class)
+# - after: interval is 60 seconds
+# - impact risk: broadcast-state transitions may update later than expected
+# - priority checks:
+#   - boundary transitions around start/end minute on timetable/program pages
+#
+# R4. Static caching behavior shift
+# - before: global no-store limited stale-cache concerns at cost of performance
+# - after: non-API responses are cacheable with extension-based policy
+# - impact risk: stale asset behavior if invalidation assumptions are weak
+# - priority checks:
+#   - cache-control headers for JS/CSS/chunks/images/playlist endpoints
+#
+# R5. Stream playlist generation semantics
+# - before: per-segment DB query selected active program in loop
+# - after: one preload query + pointer advancement over sorted programs
+# - impact risk: edge-case mismatch on exact boundary times or sparse schedules
+# - priority checks:
+#   - /streams/channel/:channelId/playlist.m3u8 across mocked time windows
+#
+# R6. Startup precompression side effects
+# - before: startup path skipped precompression task
+# - after: precompression runs before server start command
+# - impact risk: longer cold start and writable-path assumptions during deployment
+# - priority checks:
+#   - startup time, file permissions, generated .br/.gz freshness behavior
+#
+# R7. Modal simplification and UX contract
+# - before: timetable feature dialog used shared Dialog and richer explanation
+# - after: custom lightweight modal with reduced content
+# - impact risk: keyboard/a11y behavior divergence from shared dialog implementation
+# - priority checks:
+#   - focus trap/escape/overlay close behavior and semantics
+#
+# R8. Dependency removals and bundling mode shift
+# - before: client build retained removed dependencies and non-production bundler mode
+# - after: dependencies removed, webpack mode set to production, source map disabled
+# - impact risk: hidden reliance on removed packages or debug tooling assumptions
+# - priority checks:
+#   - build reproducibility and runtime smoke for all core routes
+#
+# R9. VRT mask strategy update
+# - before: mask targeted `.gif` URL pattern
+# - after: mask targets `/public/animations/` path
+# - impact risk: unexpected masking scope if non-animation assets share path pattern
+# - priority checks:
+#   - regression snapshot review on pages with static animation-like assets
+#
+# Recommended execution order for validation:
+# 1) API contract smoke (`/initialize`, major GET endpoints)
+# 2) Route smoke (`/`, `/episodes/:id`, `/programs/:id`, `/series/:id`, `/timetable`, `/404`)
+# 3) Stream playback start checks (episode/program)
+# 4) Timetable interaction + modal flow checks
+# 5) Full test/VRT run and targeted visual diff review
+#
 .wireit
