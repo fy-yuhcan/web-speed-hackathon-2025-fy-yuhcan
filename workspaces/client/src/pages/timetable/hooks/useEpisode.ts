@@ -6,17 +6,34 @@ import { episodeService } from '@wsh-2025/client/src/features/episode/services/e
 
 type Episode = StandardSchemaV1.InferOutput<typeof schema.getEpisodeByIdResponse>;
 
-export function useEpisode(episodeId: string) {
+export function useEpisode(episodeId: string, { enabled = true }: { enabled?: boolean } = {}) {
   const [episode, setEpisode] = useState<Episode | null>(null);
 
   useEffect(() => {
+    if (!enabled) {
+      setEpisode(null);
+      return;
+    }
+
+    let active = true;
     episodeService
       .fetchEpisodeById({ episodeId })
-      .then(setEpisode)
+      .then((nextEpisode) => {
+        if (!active) {
+          return;
+        }
+        setEpisode(nextEpisode);
+      })
       .catch(() => {
+        if (!active) {
+          return;
+        }
         setEpisode(null);
       });
-  }, [episodeId]);
+    return () => {
+      active = false;
+    };
+  }, [enabled, episodeId]);
 
   return episode;
 }

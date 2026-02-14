@@ -10,16 +10,20 @@ import { useSelectedProgramId } from '@wsh-2025/client/src/pages/timetable/hooks
 
 interface Props {
   isOpen: boolean;
-  program: ArrayValues<StandardSchemaV1.InferOutput<typeof schema.getTimetableResponse>>;
+  program: ArrayValues<StandardSchemaV1.InferOutput<typeof schema.getTimetableResponse>> | null;
 }
 
 export const ProgramDetailDialog = ({ isOpen, program }: Props): ReactElement => {
-  const episode = useEpisode(program.episodeId);
+  const episode = useEpisode(program?.episodeId ?? '', { enabled: isOpen && program != null });
   const [, setProgram] = useSelectedProgramId();
 
   const onClose = () => {
     setProgram(null);
   };
+
+  if (program == null) {
+    return <></>;
+  }
 
   return (
     <Dialog isOpen={isOpen} onClose={onClose}>
@@ -33,7 +37,11 @@ export const ProgramDetailDialog = ({ isOpen, program }: Props): ReactElement =>
         <img
           alt=""
           className="mb-[24px] w-full rounded-[8px] border-[2px] border-solid border-[#FFFFFF1F]"
+          decoding="async"
+          height={720}
+          loading="lazy"
           src={program.thumbnailUrl}
+          width={1280}
         />
 
         {episode != null ? (
@@ -47,7 +55,11 @@ export const ProgramDetailDialog = ({ isOpen, program }: Props): ReactElement =>
             <img
               alt=""
               className="mb-[24px] w-full rounded-[8px] border-[2px] border-solid border-[#FFFFFF1F]"
+              decoding="async"
+              height={720}
+              loading="lazy"
               src={episode.thumbnailUrl}
+              width={1280}
             />
           </>
         ) : null}

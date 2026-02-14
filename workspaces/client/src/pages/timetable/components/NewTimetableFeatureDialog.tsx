@@ -1,5 +1,3 @@
-import FeatureExplainImageUrl from '@wsh-2025/client/assets/timetable/feature-explain.png';
-import { Dialog } from '@wsh-2025/client/src/features/dialog/components/Dialog';
 import { useCloseNewFeatureDialog } from '@wsh-2025/client/src/pages/timetable/hooks/useCloseNewFeatureDialog';
 
 interface Props {
@@ -9,27 +7,30 @@ interface Props {
 export const NewTimetableFeatureDialog = ({ isOpen }: Props) => {
   const onClose = useCloseNewFeatureDialog();
 
+  if (!isOpen) {
+    return null;
+  }
+
   return (
-    <Dialog isOpen={isOpen} onClose={onClose}>
-      <div className="size-full">
+    <div
+      aria-modal
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#00000077]"
+      role="dialog"
+      onClick={onClose}
+    >
+      <div
+        className="w-[480px] shrink-0 grow-0 rounded-[8px] border-[2px] border-solid border-[#FFFFFF1F] bg-[#171717] px-[16px] py-[32px]"
+        onClick={(ev) => ev.stopPropagation()}
+      >
         <div className="mb-[16px] flex w-full flex-row justify-center">
-          <img className="object-contain" height={36} src="/public/arema.svg" width={98} />
+          <img alt="" className="object-contain" decoding="async" height={36} src="/public/arema.webp" width={98} />
         </div>
 
         <h2 className="mb-[24px] text-center text-[24px] font-bold">拡大・縮小機能を新しく追加</h2>
 
-        <p className="mb-[4px] text-[14px] text-[#999999]">
-          いつもAREMAをご利用いただきありがとうございます。この度、番組表の機能をさらに使いやすくするための新しい機能を追加しました。
-        </p>
-        <p className="mb-[4px] text-[14px] text-[#999999]">
-          番組表にあるそれぞれの番組タイトルをクリック &
-          ドラッグすることで、簡単に拡大・縮小が可能になりました。この機能を利用すると、表示幅が狭くて途切れていたタイトルや詳細情報も全て確認することができるようになります！
-        </p>
         <p className="mb-[24px] text-[14px] text-[#999999]">
-          引き続き皆様に快適にご利用いただけるよう、サービスの改善に努めてまいります。今後ともどうぞよろしくお願いいたします。
+          番組タイトルをドラッグして、表示カラムの幅を拡大・縮小できます。
         </p>
-
-        <img alt="" className="mb-[24px] w-full" src={FeatureExplainImageUrl} />
 
         <div className="flex flex-row justify-center">
           <button
@@ -41,6 +42,6 @@ export const NewTimetableFeatureDialog = ({ isOpen }: Props) => {
           </button>
         </div>
       </div>
-    </Dialog>
+    </div>
   );
 };
