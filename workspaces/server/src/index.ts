@@ -13,11 +13,11 @@ async function main() {
 
   const app = fastify();
 
-  app.addHook('onSend', async (_req, reply) => {
-    reply.headers({
-      'cache-control': 'no-store',
-      'x-robots-tag': 'noindex',
-    });
+  app.addHook('onSend', async (req, reply) => {
+    reply.header('x-robots-tag', 'noindex');
+    if (req.url.startsWith('/api')) {
+      reply.header('cache-control', 'no-store');
+    }
   });
   app.register(cors, {
     origin: true,
