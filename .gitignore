@@ -409,4 +409,151 @@ $RECYCLE.BIN/
 #   - reason: keep VRT stability after GIF->WebP migration
 #   - impact: screenshot masking remains robust despite extension changes
 #
+# [Section 3] Coverage Ledger (all current diffs)
+# Note:
+# - This ledger is based on `git diff --name-status HEAD` at report time.
+# - It intentionally groups path ranges where behavior is homogeneous.
+#
+# 3-1. Root and docs (6 files)
+# - A .nvmrc
+# - A light-house-test-first.json
+# - A plan.md
+# - A research.md
+# - M pnpm-lock.yaml
+# - M docs/development.md
+# - M docs/deployment.md
+#
+# 3-2. Public assets (104 files)
+# - animations:
+#   - D public/animations/001.gif
+#   - A public/animations/001.webp
+# - brand mark:
+#   - D public/arema.svg
+#   - A public/arema.webp
+# - images (paired migration):
+#   - D public/images/001.jpeg ... public/images/037.jpeg (37 files)
+#   - A public/images/001.webp ... public/images/037.webp (37 files)
+# - channel logos (paired migration):
+#   - D public/logos/{anime,documentary,drama,fightingsports,mahjong,music,news,reality,shogi,soccer,sumo,variety}.svg
+#   - A public/logos/{anime,documentary,drama,fightingsports,mahjong,music,news,reality,shogi,soccer,sumo,variety}.webp
+# - precompressed robots:
+#   - A public/robots.txt.br
+#   - A public/robots.txt.gz
+#
+# 3-3. Client workspace (72 files)
+# - asset migration:
+#   - D workspaces/client/assets/timetable/feature-explain.png
+#   - A workspaces/client/assets/timetable/feature-explain.webp
+# - config/package:
+#   - M workspaces/client/package.json
+#   - M workspaces/client/webpack.config.mjs
+# - app bootstrap:
+#   - M workspaces/client/src/app/Document.tsx
+#   - M workspaces/client/src/app/createRoutes.tsx
+#   - M workspaces/client/src/app/createStore.ts
+#   - M workspaces/client/src/main.tsx
+# - icon subsets:
+#   - A workspaces/client/src/assets/iconify/bi.json
+#   - A workspaces/client/src/assets/iconify/fa-solid.json
+#   - A workspaces/client/src/assets/iconify/fluent.json
+#   - A workspaces/client/src/assets/iconify/line-md.json
+#   - A workspaces/client/src/assets/iconify/material-symbols.json
+# - features/auth:
+#   - M workspaces/client/src/features/auth/components/SignInDialog.tsx
+#   - M workspaces/client/src/features/auth/components/SignOutDialog.tsx
+#   - M workspaces/client/src/features/auth/components/SignUpDialog.tsx
+#   - M workspaces/client/src/features/auth/hooks/useAuthActions.ts
+#   - M workspaces/client/src/features/auth/hooks/useAuthDialogType.ts
+#   - M workspaces/client/src/features/auth/hooks/useAuthUser.ts
+# - features/channel/episode/program/series hooks:
+#   - M workspaces/client/src/features/channel/hooks/useChannelById.ts
+#   - M workspaces/client/src/features/episode/hooks/useEpisodeById.ts
+#   - M workspaces/client/src/features/program/hooks/useProgramById.ts
+#   - M workspaces/client/src/features/series/hooks/useSeriesById.ts
+# - features/layout:
+#   - M workspaces/client/src/features/layout/components/AspectRatio.tsx
+#   - M workspaces/client/src/features/layout/components/Hoverable.tsx
+#   - M workspaces/client/src/features/layout/components/Layout.tsx
+#   - A workspaces/client/src/features/layout/hooks/useForceUpdate.ts
+#   - M workspaces/client/src/features/layout/hooks/usePointer.ts
+#   - M workspaces/client/src/features/layout/hooks/useSubscribePointer.ts
+# - features/recommended:
+#   - M workspaces/client/src/features/recommended/components/CarouselSection.tsx
+#   - M workspaces/client/src/features/recommended/components/EpisodeItem.tsx
+#   - M workspaces/client/src/features/recommended/components/JumbotronSection.tsx
+#   - M workspaces/client/src/features/recommended/components/SeriesItem.tsx
+#   - M workspaces/client/src/features/recommended/hooks/useCarouselItemWidth.ts
+#   - M workspaces/client/src/features/recommended/hooks/useRecommended.ts
+#   - M workspaces/client/src/features/recommended/hooks/useScrollSnap.ts
+# - features/timetable/requests:
+#   - M workspaces/client/src/features/requests/schedulePlugin.ts
+#   - M workspaces/client/src/features/timetable/hooks/useTimetable.ts
+#   - M workspaces/client/src/features/timetable/stores/createTimetableStoreSlice.ts
+# - shared setup/types/utils:
+#   - M workspaces/client/src/setups/unocss.ts
+#   - M workspaces/client/src/types.d.ts
+#   - A workspaces/client/src/utils/debounce.ts
+# - pages/episode:
+#   - M workspaces/client/src/pages/episode/components/EpisodePage.tsx
+#   - M workspaces/client/src/pages/episode/components/PlayerController.tsx
+#   - M workspaces/client/src/pages/episode/components/SeekThumbnail.tsx
+#   - M workspaces/client/src/pages/episode/hooks/useCurrentTime.ts
+#   - M workspaces/client/src/pages/episode/hooks/useDuration.ts
+#   - M workspaces/client/src/pages/episode/hooks/useMuted.ts
+#   - M workspaces/client/src/pages/episode/hooks/usePlayerRef.ts
+#   - M workspaces/client/src/pages/episode/hooks/usePlaying.ts
+# - pages/home/not_found/program/series:
+#   - M workspaces/client/src/pages/home/components/HomePage.tsx
+#   - M workspaces/client/src/pages/not_found/components/NotFoundPage.tsx
+#   - M workspaces/client/src/pages/program/components/ProgramPage.tsx
+#   - M workspaces/client/src/pages/program/hooks/useMuted.ts
+#   - M workspaces/client/src/pages/program/hooks/usePlayerRef.ts
+#   - M workspaces/client/src/pages/series/components/SeriesPage.tsx
+# - pages/timetable:
+#   - M workspaces/client/src/pages/timetable/components/ChannelTitle.tsx
+#   - M workspaces/client/src/pages/timetable/components/NewTimetableFeatureDialog.tsx
+#   - M workspaces/client/src/pages/timetable/components/Program.tsx
+#   - M workspaces/client/src/pages/timetable/components/ProgramDetailDialog.tsx
+#   - M workspaces/client/src/pages/timetable/components/ProgramList.tsx
+#   - M workspaces/client/src/pages/timetable/components/TimetablePage.tsx
+#   - M workspaces/client/src/pages/timetable/hooks/useChangeColumnWidth.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useCloseNewFeatureDialog.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useColumnWidth.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useCurrentUnixtimeMs.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useEpisode.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useSelectedProgramId.ts
+#   - M workspaces/client/src/pages/timetable/hooks/useShownNewFeatureDialog.ts
+#   - M workspaces/client/src/pages/timetable/stores/createTimetablePageStoreSlice.ts
+#
+# 3-4. Server workspace (324 files)
+# - config/runtime tooling:
+#   - M workspaces/server/package.json
+#   - M workspaces/server/loaders/png.cjs
+#   - A workspaces/server/tools/precompress_assets.mjs
+#   - M workspaces/server/tools/seed.ts
+# - server entrypoints:
+#   - M workspaces/server/src/api.ts
+#   - M workspaces/server/src/index.ts
+#   - M workspaces/server/src/ssr.tsx
+#   - M workspaces/server/src/streams.tsx
+# - stream chunk modules (all modified):
+#   - M workspaces/server/streams/caminandes2/000.ts ... 072.ts (73 files)
+#   - M workspaces/server/streams/dailydweebs/000.ts ... 029.ts (30 files)
+#   - M workspaces/server/streams/glasshalf/000.ts ... 095.ts (96 files)
+#   - M workspaces/server/streams/wing-it/000.ts ... 116.ts (117 files)
+#
+# 3-5. Test workspace (1 file)
+# - M workspaces/test/src/full-page.test.ts
+#
+# 3-6. Unstaged overlay at report time (9 files; already included above)
+# - M docs/deployment.md
+# - M workspaces/client/src/pages/timetable/components/NewTimetableFeatureDialog.tsx
+# - M workspaces/client/src/pages/timetable/components/Program.tsx
+# - M workspaces/client/src/pages/timetable/components/ProgramDetailDialog.tsx
+# - M workspaces/client/src/pages/timetable/components/ProgramList.tsx
+# - M workspaces/client/src/pages/timetable/components/TimetablePage.tsx
+# - M workspaces/client/src/pages/timetable/hooks/useCurrentUnixtimeMs.ts
+# - M workspaces/client/src/pages/timetable/stores/createTimetablePageStoreSlice.ts
+# - M workspaces/server/package.json
+#
 .wireit
