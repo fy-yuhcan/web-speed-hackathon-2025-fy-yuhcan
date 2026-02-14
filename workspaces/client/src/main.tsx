@@ -11,12 +11,11 @@ import { createRoutes } from '@wsh-2025/client/src/app/createRoutes';
 import { createStore } from '@wsh-2025/client/src/app/createStore';
 
 declare global {
-  var __zustandHydrationData: unknown;
   var __staticRouterHydrationData: HydrationState;
 }
 
 function main() {
-  const store = createStore({});
+  const store = createStore();
   const router = createBrowserRouter(createRoutes(store), {});
 
   hydrateRoot(
@@ -29,4 +28,8 @@ function main() {
   );
 }
 
-document.addEventListener('DOMContentLoaded', main);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', main, { once: true });
+} else {
+  main();
+}

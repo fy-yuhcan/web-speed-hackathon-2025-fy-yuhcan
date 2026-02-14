@@ -2,74 +2,75 @@ import { useEffect, useRef } from 'react';
 
 export function useScrollSnap({ scrollPadding }: { scrollPadding: number }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const isScrolling = useRef(false);
   const isSnapping = useRef(false);
 
   useEffect(() => {
-    if (containerRef.current == null) {
+    const container = containerRef.current;
+    if (container == null) {
       return;
     }
 
-    const handleScroll = () => {
-      if (isScrolling.current) {
-        return;
+    let releaseTimer: ReturnType<typeof setTimeout> | null = null;
+    let scrollIdleTimer: ReturnType<typeof setTimeout> | null = null;
+    const releaseSnapping = () => {
+      if (releaseTimer != null) {
+        clearTimeout(releaseTimer);
       }
-      isScrolling.current = true;
+      releaseTimer = setTimeout(() => {
+        isSnapping.current = false;
+      }, 250);
     };
 
-    const handleScrollend = () => {
-      if (!isScrolling.current) {
+    const snapToNearest = () => {
+      const currentContainer = containerRef.current;
+      if (currentContainer == null || isSnapping.current) {
         return;
       }
-      isScrolling.current = false;
-    };
-
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    let interval = setInterval(() => {
-      if (!containerRef.current) {
+      const childElements = Array.from(currentContainer.children) as HTMLElement[];
+      if (childElements.length === 0) {
         return;
       }
-
-      const childElements = Array.from(containerRef.current.children) as HTMLElement[];
       const childScrollPositions = childElements.map((element) => element.offsetLeft);
-      const scrollPosition = containerRef.current.scrollLeft;
+      const scrollPosition = currentContainer.scrollLeft;
       const childIndex = childScrollPositions.reduce((prev, curr, index) => {
         return Math.abs(curr - scrollPosition) < Math.abs((childScrollPositions[prev] ?? 0) - scrollPosition)
           ? index
           : prev;
       }, 0);
-
-      if (isScrolling.current) {
-        return;
-      }
-
-      if (isSnapping.current) {
+      const destination = (childScrollPositions[childIndex] ?? 0) - scrollPadding;
+      if (Math.abs(destination - scrollPosition) < 1) {
         return;
       }
 
       isSnapping.current = true;
-      containerRef.current.scrollTo({
+      currentContainer.scrollTo({
         behavior: 'smooth',
-        left: (childScrollPositions[childIndex] ?? 0) - scrollPadding,
+        left: destination,
       });
+      releaseSnapping();
+    };
 
-      timer = setTimeout(() => {
-        isSnapping.current = false;
-      }, 1000);
-    });
+    const scheduleSnap = () => {
+      if (scrollIdleTimer != null) {
+        clearTimeout(scrollIdleTimer);
+      }
+      scrollIdleTimer = setTimeout(() => {
+        snapToNearest();
+      }, 120);
+    };
 
-    containerRef.current.addEventListener('scroll', handleScroll);
-    containerRef.current.addEventListener('scrollend', handleScrollend);
+    container.addEventListener('scroll', scheduleSnap, { passive: true });
 
     return () => {
-      containerRef.current?.removeEventListener('scroll', handleScroll);
-      containerRef.current?.removeEventListener('scrollend', handleScrollend);
-      clearInterval(interval);
-      if (timer) {
-        clearTimeout(timer);
+      container.removeEventListener('scroll', scheduleSnap);
+      if (scrollIdleTimer != null) {
+        clearTimeout(scrollIdleTimer);
+      }
+      if (releaseTimer != null) {
+        clearTimeout(releaseTimer);
       }
     };
-  }, []);
+  }, [scrollPadding]);
 
   return containerRef;
 }

@@ -1,4 +1,4 @@
-import { DateTime } from 'luxon';
+import { useMemo } from 'react';
 import { ArrayValues } from 'type-fest';
 
 import { useStore } from '@wsh-2025/client/src/app/StoreContext';
@@ -6,26 +6,27 @@ import { useStore } from '@wsh-2025/client/src/app/StoreContext';
 type ChannelId = string;
 
 export function useTimetable() {
-  const state = useStore((s) => s);
+  const channels = useStore((s) => s.features.channel.channels);
+  const programs = useStore((s) => s.features.timetable.programs);
 
-  const channels = Object.values(state.features.channel.channels);
-  const programs = Object.values(state.features.timetable.programs);
+  return useMemo(() => {
+    const programList = Object.values(programs);
+    const record: Record<ChannelId, ArrayValues<typeof programList>[]> = Object.fromEntries(
+      Object.keys(channels).map((channelId) => [channelId, []]),
+    );
 
-  const record: Record<ChannelId, ArrayValues<typeof programs>[]> = {};
-
-  for (const channel of channels) {
-    const filteredPrograms = [];
-
-    for (const program of programs) {
-      if (program.channelId === channel.id) {
-        filteredPrograms.push(program);
+    for (const program of programList) {
+      const list = record[program.channelId];
+      if (list != null) {
+        list.push(program);
       }
     }
+    for (const list of Object.values(record)) {
+      list.sort((a, b) => {
+        return a.startAt.localeCompare(b.startAt);
+      });
+    }
 
-    record[channel.id] = filteredPrograms.sort((a, b) => {
-      return DateTime.fromISO(a.startAt).toMillis() - DateTime.fromISO(b.startAt).toMillis();
-    });
-  }
-
-  return record;
+    return record;
+  }, [channels, programs]);
 }

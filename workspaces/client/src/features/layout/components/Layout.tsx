@@ -11,15 +11,12 @@ import { useAuthActions } from '@wsh-2025/client/src/features/auth/hooks/useAuth
 import { useAuthDialogType } from '@wsh-2025/client/src/features/auth/hooks/useAuthDialogType';
 import { useAuthUser } from '@wsh-2025/client/src/features/auth/hooks/useAuthUser';
 import { Loading } from '@wsh-2025/client/src/features/layout/components/Loading';
-import { useSubscribePointer } from '@wsh-2025/client/src/features/layout/hooks/useSubscribePointer';
 
 interface Props {
   children: ReactNode;
 }
 
 export const Layout = ({ children }: Props) => {
-  useSubscribePointer();
-
   const navigation = useNavigation();
   const isLoading =
     navigation.location != null && (navigation.location.state as { loading?: string } | null)?.['loading'] !== 'none';
@@ -64,7 +61,14 @@ export const Layout = ({ children }: Props) => {
           )}
         >
           <Link className="block flex w-[188px] items-center justify-center px-[8px]" to="/">
-            <img alt="AREMA" className="object-contain" height={36} src="/public/arema.svg" width={98} />
+            <img
+              alt="AREMA"
+              className="object-contain"
+              decoding="async"
+              height={36}
+              src="/public/arema.webp"
+              width={98}
+            />
           </Link>
         </header>
 

@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+
 import { SeriesEpisodeItem } from '@wsh-2025/client/src/features/series/components/SeriesEposideItem';
 
 interface Props {
@@ -13,13 +15,16 @@ interface Props {
 }
 
 export const SeriesEpisodeList = ({ episodes, selectedEpisodeId }: Props) => {
-  const orderedEpisodes = [...episodes].sort((a, b) => {
-    return a.order - b.order;
-  });
+  const orderedEpisodes = useMemo(() => {
+    return [...episodes].sort((a, b) => {
+      return a.order - b.order;
+    });
+  }, [episodes]);
+  const visibleEpisodes = orderedEpisodes.slice(0, 24);
 
   return (
     <div className="flex w-full flex-col gap-y-[16px]">
-      {orderedEpisodes.map((episode) => (
+      {visibleEpisodes.map((episode) => (
         <div key={episode.id} className="shrink-0 grow-0">
           <SeriesEpisodeItem episode={episode} selected={episode.id === selectedEpisodeId} />
         </div>

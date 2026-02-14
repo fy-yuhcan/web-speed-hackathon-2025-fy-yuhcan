@@ -1,15 +1,10 @@
 import { StandardSchemaV1 } from '@standard-schema/spec';
 import * as schema from '@wsh-2025/schema/src/api/schema';
-import { useRef } from 'react';
 import Ellipsis from 'react-ellipsis-component';
 import { Flipped } from 'react-flip-toolkit';
 import { NavLink } from 'react-router';
 import invariant from 'tiny-invariant';
 import { ArrayValues } from 'type-fest';
-
-import { Player } from '../../player/components/Player';
-import { PlayerType } from '../../player/constants/player_type';
-import { PlayerWrapper } from '../../player/interfaces/player_wrapper';
 
 import { Hoverable } from '@wsh-2025/client/src/features/layout/components/Hoverable';
 
@@ -18,8 +13,6 @@ interface Props {
 }
 
 export const JumbotronSection = ({ module }: Props) => {
-  const playerRef = useRef<PlayerWrapper>(null);
-
   const episode = module.items[0]?.episode;
   invariant(episode);
 
@@ -44,12 +37,15 @@ export const JumbotronSection = ({ module }: Props) => {
 
               <Flipped stagger flipId={isTransitioning ? `episode-${episode.id}` : 0}>
                 <div className="h-full w-auto shrink-0 grow-0">
-                  <Player
-                    loop
-                    className="size-full"
-                    playerRef={playerRef}
-                    playerType={PlayerType.ShakaPlayer}
-                    playlistUrl={`/streams/episode/${episode.id}/playlist.m3u8`}
+                  <img
+                    alt=""
+                    className="size-full object-cover"
+                    decoding="async"
+                    fetchPriority="high"
+                    height={720}
+                    loading="eager"
+                    src={episode.thumbnailUrl}
+                    width={1280}
                   />
                 </div>
               </Flipped>

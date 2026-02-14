@@ -1,11 +1,24 @@
 import classNames from 'classnames';
-import { Children, cloneElement, ReactElement, Ref, useRef } from 'react';
+import {
+  Children,
+  cloneElement,
+  FocusEventHandler,
+  PointerEventHandler,
+  ReactElement,
+  Ref,
+  useState,
+} from 'react';
 import { useMergeRefs } from 'use-callback-ref';
 
-import { usePointer } from '@wsh-2025/client/src/features/layout/hooks/usePointer';
-
 interface Props {
-  children: ReactElement<{ className?: string; ref?: Ref<unknown> }>;
+  children: ReactElement<{
+    className?: string;
+    onBlur?: FocusEventHandler<HTMLElement>;
+    onFocus?: FocusEventHandler<HTMLElement>;
+    onPointerEnter?: PointerEventHandler<HTMLElement>;
+    onPointerLeave?: PointerEventHandler<HTMLElement>;
+    ref?: Ref<unknown>;
+  }>;
   classNames: {
     default?: string;
     hovered?: string;
@@ -14,26 +27,31 @@ interface Props {
 
 export const Hoverable = (props: Props) => {
   const child = Children.only(props.children);
-  const elementRef = useRef<HTMLDivElement>(null);
-
-  const mergedRef = useMergeRefs([elementRef, child.props.ref].filter((v) => v != null));
-
-  const pointer = usePointer();
-  const elementRect = elementRef.current?.getBoundingClientRect();
-
-  const hovered =
-    elementRect != null &&
-    elementRect.left <= pointer.x &&
-    pointer.x <= elementRect.right &&
-    elementRect.top <= pointer.y &&
-    pointer.y <= elementRect.bottom;
+  const mergedRef = useMergeRefs([child.props.ref].filter((v) => v != null));
+  const [isHovered, setIsHovered] = useState(false);
 
   return cloneElement(child, {
     className: classNames(
       child.props.className,
       'cursor-pointer',
-      hovered ? props.classNames.hovered : props.classNames.default,
+      isHovered ? props.classNames.hovered : props.classNames.default,
     ),
+    onBlur: (event) => {
+      child.props.onBlur?.(event);
+      setIsHovered(false);
+    },
+    onFocus: (event) => {
+      child.props.onFocus?.(event);
+      setIsHovered(true);
+    },
+    onPointerEnter: (event) => {
+      child.props.onPointerEnter?.(event);
+      setIsHovered(true);
+    },
+    onPointerLeave: (event) => {
+      child.props.onPointerLeave?.(event);
+      setIsHovered(false);
+    },
     ref: mergedRef,
   });
 };

@@ -17,6 +17,7 @@ export const CarouselSection = ({ module }: Props) => {
   const containerRefForScrollSnap = useScrollSnap({ scrollPadding: 24 });
   const { ref: containerRefForItemWidth, width: itemWidth } = useCarouselItemWidth();
   const mergedRef = useMergeRefs([containerRefForItemWidth, containerRefForScrollSnap]);
+  const visibleItems = module.items.slice(0, 6);
 
   return (
     <>
@@ -28,8 +29,8 @@ export const CarouselSection = ({ module }: Props) => {
           className={`relative mx-[-24px] flex flex-row gap-x-[12px] overflow-x-auto overflow-y-hidden pl-[24px] pr-[56px]`}
           data-scroll-restore={`carousel-${module.id}`}
         >
-          {module.items.map((item) => (
-            <div key={item.id} className={`w-[${itemWidth}px] shrink-0 grow-0`}>
+          {visibleItems.map((item) => (
+            <div key={item.id} className="shrink-0 grow-0" style={{ minWidth: itemWidth, width: itemWidth }}>
               {item.series != null ? <SeriesItem series={item.series} /> : null}
               {item.episode != null ? <EpisodeItem episode={item.episode} /> : null}
             </div>

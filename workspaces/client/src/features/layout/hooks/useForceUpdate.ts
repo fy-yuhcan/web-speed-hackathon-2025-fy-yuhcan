@@ -1,0 +1,9 @@
+import { useReducer } from 'react';
+
+export function useForceUpdate(): () => void {
+  const [, forceUpdate] = useReducer((count: number) => {
+    return count + 1;
+  }, 0);
+
+  return forceUpdate;
+}
