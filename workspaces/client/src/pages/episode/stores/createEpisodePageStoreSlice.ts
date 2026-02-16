@@ -38,6 +38,12 @@ export const createEpisodePageStoreSlice = () => {
     playerRef: (player: PlayerWrapper | null) => {
       function onMount(player: PlayerWrapper): void {
         const abortController = new AbortController();
+        const updateProgress = () => {
+          set(() => ({
+            currentTime: player.currentTime,
+            duration: player.duration,
+          }));
+        };
 
         player.videoElement.addEventListener(
           'playing',
@@ -53,16 +59,9 @@ export const createEpisodePageStoreSlice = () => {
           },
           { signal: abortController.signal },
         );
-
-        const interval = setInterval(function tick() {
-          set(() => ({
-            currentTime: player.currentTime,
-            duration: player.duration,
-          }));
-        }, 250);
-        abortController.signal.addEventListener('abort', () => {
-          clearInterval(interval);
-        });
+        player.videoElement.addEventListener('timeupdate', updateProgress, { signal: abortController.signal });
+        player.videoElement.addEventListener('durationchange', updateProgress, { signal: abortController.signal });
+        player.videoElement.addEventListener('loadedmetadata', updateProgress, { signal: abortController.signal });
 
         set(() => ({
           abortController,

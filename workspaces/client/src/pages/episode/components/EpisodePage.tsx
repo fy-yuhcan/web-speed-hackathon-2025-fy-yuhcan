@@ -1,15 +1,17 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import Ellipsis from 'react-ellipsis-component';
 import { Flipped } from 'react-flip-toolkit';
 import { Params, useParams } from 'react-router';
 import invariant from 'tiny-invariant';
 
 import { createStore } from '@wsh-2025/client/src/app/createStore';
+import { useStore } from '@wsh-2025/client/src/app/StoreContext';
 import { useAuthActions } from '@wsh-2025/client/src/features/auth/hooks/useAuthActions';
 import { useAuthUser } from '@wsh-2025/client/src/features/auth/hooks/useAuthUser';
 import { useEpisodeById } from '@wsh-2025/client/src/features/episode/hooks/useEpisodeById';
 import { AspectRatio } from '@wsh-2025/client/src/features/layout/components/AspectRatio';
 import { PlayerType } from '@wsh-2025/client/src/features/player/constants/player_type';
+import { preloadPlayerLibrary } from '@wsh-2025/client/src/features/player/logics/create_player';
 import { RecommendedSection } from '@wsh-2025/client/src/features/recommended/components/RecommendedSection';
 import { useRecommended } from '@wsh-2025/client/src/features/recommended/hooks/useRecommended';
 import { SeriesEpisodeList } from '@wsh-2025/client/src/features/series/components/SeriesEpisodeList';
@@ -26,7 +28,10 @@ const LazyPlayer = lazy(async () => {
 
 export const prefetch = async (store: ReturnType<typeof createStore>, { episodeId }: Params) => {
   invariant(episodeId);
-  await store.getState().features.episode.fetchEpisodeById({ episodeId });
+  await Promise.all([
+    store.getState().features.episode.fetchEpisodeById({ episodeId }),
+    store.getState().features.recommended.fetchRecommendedModulesByReferenceId({ referenceId: episodeId }),
+  ]);
   return null;
 };
 
@@ -43,8 +48,13 @@ export const EpisodePage = () => {
   const modules = useRecommended({ referenceId: episodeId });
 
   const playerRef = usePlayerRef();
+  const playing = useStore((s) => s.pages.episode.playing);
 
   const isSignInRequired = episode.premium && user == null;
+
+  useEffect(() => {
+    preloadPlayerLibrary(PlayerType.HlsJS);
+  }, []);
 
   return (
     <>
@@ -80,49 +90,45 @@ export const EpisodePage = () => {
                 </div>
               </div>
             ) : (
-              <Suspense
-                fallback={
-                  <AspectRatio ratioHeight={9} ratioWidth={16}>
-                    <div className="grid size-full">
-                      <img
-                        alt=""
-                        className="size-full place-self-stretch [grid-area:1/-1]"
-                        decoding="async"
-                        fetchPriority="high"
-                        height={720}
-                        loading="eager"
-                        src={episode.thumbnailUrl}
-                        width={1280}
-                      />
-                      <div className="size-full place-self-stretch bg-[#00000077] [grid-area:1/-1]" />
-                      <div className="i-line-md:loading-twotone-loop size-[48px] place-self-center text-[#ffffff] [grid-area:1/-1]" />
-                    </div>
-                  </AspectRatio>
-                }
-              >
-                <div className="relative size-full">
-                  <LazyPlayer
-                    className="size-full"
-                    playerRef={playerRef}
-                    playerType={PlayerType.HlsJS}
-                    playlistUrl={`/streams/episode/${episode.id}/playlist.m3u8`}
+              <AspectRatio ratioHeight={9} ratioWidth={16}>
+                <div className="relative size-full overflow-hidden bg-[#000000]">
+                  <Suspense fallback={null}>
+                    <LazyPlayer
+                      className="size-full"
+                      playerRef={playerRef}
+                      playerType={PlayerType.HlsJS}
+                      playlistUrl={`/streams/episode/${episode.id}/playlist.m3u8`}
+                    />
+                  </Suspense>
+
+                  <img
+                    alt=""
+                    className={`absolute inset-0 size-full object-cover transition-opacity duration-300 ${
+                      playing ? 'pointer-events-none opacity-0' : 'opacity-100'
+                    }`}
+                    decoding="async"
+                    fetchPriority="high"
+                    height={720}
+                    loading="eager"
+                    src={episode.thumbnailUrl}
+                    width={1280}
                   />
 
-                  <div className="absolute inset-x-0 bottom-0">
+                  <div className="absolute inset-x-0 bottom-0 z-10">
                     <PlayerController episode={episode} />
                   </div>
                 </div>
-              </Suspense>
+              </AspectRatio>
             )}
           </div>
         </Flipped>
 
         <div className="mb-[24px]">
           <div className="text-[16px] text-[#ffffff]">
-            <Ellipsis ellipsis reflowOnResize maxLine={1} text={episode.series.title} visibleLine={1} />
+            <Ellipsis ellipsis maxLine={1} text={episode.series.title} visibleLine={1} />
           </div>
           <h1 className="mt-[8px] text-[22px] font-bold text-[#ffffff]">
-            <Ellipsis ellipsis reflowOnResize maxLine={2} text={episode.title} visibleLine={2} />
+            <Ellipsis ellipsis maxLine={2} text={episode.title} visibleLine={2} />
           </h1>
           {episode.premium ? (
             <div className="mt-[8px]">
@@ -132,19 +138,17 @@ export const EpisodePage = () => {
             </div>
           ) : null}
           <div className="mt-[16px] text-[16px] text-[#999999]">
-            <Ellipsis ellipsis reflowOnResize maxLine={3} text={episode.description} visibleLine={3} />
+            <Ellipsis ellipsis maxLine={3} text={episode.description} visibleLine={3} />
           </div>
         </div>
 
-        {modules[0] != null ? (
-          <div className="mt-[24px]">
-            <RecommendedSection module={modules[0]} />
-          </div>
-        ) : null}
+        <div className="mt-[24px] min-h-[320px]">
+          {modules[0] != null ? <RecommendedSection module={modules[0]} /> : <div className="h-[320px] w-full rounded-[8px] bg-[#171717]" />}
+        </div>
 
         <div className="mt-[24px]">
           <h2 className="mb-[12px] text-[22px] font-bold text-[#ffffff]">エピソード</h2>
-          <SeriesEpisodeList episodes={episode.series.episodes} selectedEpisodeId={episode.id} />
+          <SeriesEpisodeList episodes={episode.series.episodes} />
         </div>
       </div>
     </>

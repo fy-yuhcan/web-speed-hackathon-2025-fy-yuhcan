@@ -4,8 +4,10 @@ import { RefCallback } from 'react';
 import { PlayerWrapper } from '@wsh-2025/client/src/features/player/interfaces/player_wrapper';
 
 interface ProgramPageState {
+  abortController: AbortController | null;
   muted: boolean;
   player: PlayerWrapper | null;
+  playing: boolean;
 }
 
 interface ProgramPageActions {
@@ -15,15 +17,45 @@ interface ProgramPageActions {
 
 export const createProgramPageStoreSlice = () => {
   return lens<ProgramPageState & ProgramPageActions>((set, get) => ({
+    abortController: null,
     muted: true,
     player: null,
     playerRef: (player: PlayerWrapper | null) => {
       function onMount(player: PlayerWrapper): void {
-        set(() => ({ player }));
+        const abortController = new AbortController();
+
+        player.videoElement.addEventListener(
+          'playing',
+          () => {
+            set({ playing: true });
+          },
+          { signal: abortController.signal },
+        );
+        player.videoElement.addEventListener(
+          'pause',
+          () => {
+            set({ playing: false });
+          },
+          { signal: abortController.signal },
+        );
+
+        set(() => ({
+          abortController,
+          muted: true,
+          player,
+          playing: false,
+        }));
       }
 
       function onUnmount(): void {
-        set(() => ({ player: null }));
+        const { abortController } = get();
+        abortController?.abort();
+
+        set(() => ({
+          abortController: null,
+          player: null,
+          playing: false,
+        }));
       }
 
       if (player != null) {
@@ -37,5 +69,6 @@ export const createProgramPageStoreSlice = () => {
       player?.setMuted(muted);
       set(() => ({ muted }));
     },
+    playing: false,
   }));
 };

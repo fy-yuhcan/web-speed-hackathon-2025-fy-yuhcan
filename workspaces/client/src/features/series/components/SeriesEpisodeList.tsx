@@ -11,10 +11,9 @@ interface Props {
     thumbnailUrl: string;
     title: string;
   }[];
-  selectedEpisodeId: string | null;
 }
 
-export const SeriesEpisodeList = ({ episodes, selectedEpisodeId }: Props) => {
+export const SeriesEpisodeList = ({ episodes }: Props) => {
   const orderedEpisodes = useMemo(() => {
     return [...episodes].sort((a, b) => {
       return a.order - b.order;
@@ -26,7 +25,7 @@ export const SeriesEpisodeList = ({ episodes, selectedEpisodeId }: Props) => {
     <div className="flex w-full flex-col gap-y-[16px]">
       {visibleEpisodes.map((episode) => (
         <div key={episode.id} className="shrink-0 grow-0">
-          <SeriesEpisodeItem episode={episode} selected={episode.id === selectedEpisodeId} />
+          <SeriesEpisodeItem episode={episode} />
         </div>
       ))}
     </div>

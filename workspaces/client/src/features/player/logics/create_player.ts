@@ -6,6 +6,21 @@ interface VhsConfig {
   MAX_GOAL_BUFFER_LENGTH: number;
 }
 
+function createVideoElement(): HTMLVideoElement {
+  const video = document.createElement('video');
+  video.autoplay = true;
+  video.controls = false;
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  video.volume = 0.25;
+  video.style.display = 'block';
+  video.style.height = '100%';
+  video.style.objectFit = 'contain';
+  video.style.width = '100%';
+  return video;
+}
+
 let shakaModulePromise: Promise<typeof import('shaka-player')> | null = null;
 let hlsModulePromise: Promise<typeof import('hls.js')> | null = null;
 let videoJsModulePromise: Promise<typeof import('video.js')> | null = null;
@@ -32,12 +47,7 @@ async function createShakaPlayer(playerType: PlayerType.ShakaPlayer): Promise<Pl
   const { default: shaka } = await loadShakaModule();
 
   class ShakaPlayerWrapper implements PlayerWrapper {
-    readonly videoElement = Object.assign(document.createElement('video'), {
-      autoplay: true,
-      controls: false,
-      muted: true,
-      volume: 0.25,
-    });
+    readonly videoElement = createVideoElement();
     private _player = new shaka.Player();
     readonly playerType: PlayerType.ShakaPlayer;
 
@@ -45,7 +55,7 @@ async function createShakaPlayer(playerType: PlayerType.ShakaPlayer): Promise<Pl
       this.playerType = playerType;
       this._player.configure({
         streaming: {
-          bufferingGoal: 50,
+          bufferingGoal: 10,
         },
       });
     }
@@ -96,15 +106,10 @@ async function createHlsJsPlayer(playerType: PlayerType.HlsJS): Promise<PlayerWr
   const { default: HlsJs } = await loadHlsModule();
 
   class HlsJSPlayerWrapper implements PlayerWrapper {
-    readonly videoElement = Object.assign(document.createElement('video'), {
-      autoplay: true,
-      controls: false,
-      muted: true,
-      volume: 0.25,
-    });
+    readonly videoElement = createVideoElement();
     private _player = new HlsJs({
       enableWorker: false,
-      maxBufferLength: 50,
+      maxBufferLength: 10,
     });
     readonly playerType: PlayerType.HlsJS;
 
@@ -156,20 +161,15 @@ async function createVideoJsPlayer(playerType: PlayerType.VideoJS): Promise<Play
   const { default: videojs } = await loadVideoJsModule();
 
   class VideoJSPlayerWrapper implements PlayerWrapper {
-    readonly videoElement = Object.assign(document.createElement('video'), {
-      autoplay: true,
-      controls: false,
-      muted: true,
-      volume: 0.25,
-    });
+    readonly videoElement = createVideoElement();
     private _player = videojs(this.videoElement);
     readonly playerType: PlayerType.VideoJS;
 
     constructor(playerType: PlayerType.VideoJS) {
       const vhsConfig = (videojs as unknown as { Vhs?: VhsConfig }).Vhs;
       if (vhsConfig != null) {
-        vhsConfig.GOAL_BUFFER_LENGTH = 50;
-        vhsConfig.MAX_GOAL_BUFFER_LENGTH = 50;
+        vhsConfig.GOAL_BUFFER_LENGTH = 10;
+        vhsConfig.MAX_GOAL_BUFFER_LENGTH = 10;
       }
       this.playerType = playerType;
     }

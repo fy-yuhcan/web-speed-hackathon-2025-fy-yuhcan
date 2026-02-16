@@ -28,10 +28,10 @@ export const JumbotronSection = ({ module }: Props) => {
             <>
               <div className="grow-1 shrink-1 p-[24px]">
                 <div className="mb-[16px] w-full text-center text-[22px] font-bold text-[#ffffff]">
-                  <Ellipsis ellipsis reflowOnResize maxLine={2} text={episode.title} visibleLine={2} />
+                  <Ellipsis ellipsis maxLine={2} text={episode.title} visibleLine={2} />
                 </div>
                 <div className="w-full text-center text-[14px] font-bold text-[#ffffff]">
-                  <Ellipsis ellipsis reflowOnResize maxLine={3} text={episode.description} visibleLine={3} />
+                  <Ellipsis ellipsis maxLine={3} text={episode.description} visibleLine={3} />
                 </div>
               </div>
 

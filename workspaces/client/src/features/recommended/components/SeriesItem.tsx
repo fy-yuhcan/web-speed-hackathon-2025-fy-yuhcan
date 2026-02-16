@@ -34,7 +34,7 @@ export const SeriesItem = ({ series }: Props) => {
               </div>
               <div className="p-[8px]">
                 <div className="text-[14px] font-bold text-[#ffffff]">
-                  <Ellipsis ellipsis reflowOnResize maxLine={2} text={series.title} visibleLine={2} />
+                  <Ellipsis ellipsis maxLine={2} text={series.title} visibleLine={2} />
                 </div>
               </div>
             </>

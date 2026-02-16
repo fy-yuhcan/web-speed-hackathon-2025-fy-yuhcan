@@ -4,6 +4,7 @@ import { assignRef } from 'use-callback-ref';
 
 import { PlayerType } from '@wsh-2025/client/src/features/player/constants/player_type';
 import { PlayerWrapper } from '@wsh-2025/client/src/features/player/interfaces/player_wrapper';
+import { createPlayer } from '@wsh-2025/client/src/features/player/logics/create_player';
 
 interface Props {
   className?: string;
@@ -23,19 +24,25 @@ export const Player = ({ className, loop, playerRef, playerType, playlistUrl }: 
     const abortController = new AbortController();
     let player: PlayerWrapper | null = null;
 
-    void import('@wsh-2025/client/src/features/player/logics/create_player').then(async ({ createPlayer }) => {
+    void (async () => {
       if (abortController.signal.aborted) {
         return;
       }
-      player = await createPlayer(playerType);
+      const createdPlayer = await createPlayer(playerType);
       if (abortController.signal.aborted) {
-        player.destory();
+        createdPlayer.destory();
         return;
       }
-      player.load(playlistUrl, { loop: loop ?? false });
+      player = createdPlayer;
       mountElement.appendChild(player.videoElement);
       assignRef(playerRef, player);
-    });
+      queueMicrotask(() => {
+        if (abortController.signal.aborted || player == null) {
+          return;
+        }
+        player.load(playlistUrl, { loop: loop ?? false });
+      });
+    })();
 
     return () => {
       abortController.abort();
