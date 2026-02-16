@@ -56,6 +56,12 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
   const trimText = (text: string, maxLength: number): string => {
     return text.length <= maxLength ? text : `${text.slice(0, maxLength)}…`;
   };
+  const stripAssetVersion = (url: string): string => {
+    const queryIndex = url.indexOf('?');
+    const hashIndex = url.indexOf('#');
+    const cutIndex = [queryIndex, hashIndex].filter((index) => index >= 0).sort((a, b) => a - b)[0];
+    return cutIndex == null ? url : url.slice(0, cutIndex);
+  };
 
   /* eslint-disable sort/object-properties */
   api.route({
@@ -110,7 +116,11 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
           return void 0;
         },
       });
-      return reply.code(200).send(channels);
+      const normalizedChannels = channels.map((channel) => ({
+        ...channel,
+        logoUrl: stripAssetVersion(channel.logoUrl),
+      }));
+      return reply.code(200).send(normalizedChannels);
     },
   });
 
@@ -141,7 +151,11 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       if (channel == null) {
         return reply.code(404).send();
       }
-      return reply.code(200).send(channel);
+      const normalizedChannel = {
+        ...channel,
+        logoUrl: stripAssetVersion(channel.logoUrl),
+      };
+      return reply.code(200).send(normalizedChannel);
     },
   });
 
@@ -190,12 +204,15 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedEpisodes = episodes.map((episode) => ({
         ...episode,
         description: trimText(episode.description, 160),
+        thumbnailUrl: stripAssetVersion(episode.thumbnailUrl),
         series: {
           ...episode.series,
           description: trimText(episode.series.description, 120),
+          thumbnailUrl: stripAssetVersion(episode.series.thumbnailUrl),
           episodes: episode.series.episodes.map((seriesEpisode) => ({
             ...seriesEpisode,
             description: trimText(seriesEpisode.description, 96),
+            thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
           })),
         },
       }));
@@ -244,12 +261,15 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedEpisode = {
         ...episode,
         description: trimText(episode.description, 160),
+        thumbnailUrl: stripAssetVersion(episode.thumbnailUrl),
         series: {
           ...episode.series,
           description: trimText(episode.series.description, 120),
+          thumbnailUrl: stripAssetVersion(episode.series.thumbnailUrl),
           episodes: episode.series.episodes.map((seriesEpisode) => ({
             ...seriesEpisode,
             description: trimText(seriesEpisode.description, 96),
+            thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
           })),
         },
       };
@@ -298,9 +318,11 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedSeries = series.map((item) => ({
         ...item,
         description: trimText(item.description, 120),
+        thumbnailUrl: stripAssetVersion(item.thumbnailUrl),
         episodes: item.episodes.map((seriesEpisode) => ({
           ...seriesEpisode,
           description: trimText(seriesEpisode.description, 96),
+          thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
         })),
       }));
       return reply.code(200).send(normalizedSeries);
@@ -344,9 +366,11 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedSeries = {
         ...series,
         description: trimText(series.description, 120),
+        thumbnailUrl: stripAssetVersion(series.thumbnailUrl),
         episodes: series.episodes.map((seriesEpisode) => ({
           ...seriesEpisode,
           description: trimText(seriesEpisode.description, 96),
+          thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
         })),
       };
       return reply.code(200).send(normalizedSeries);
@@ -387,7 +411,8 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       });
       const normalizedPrograms = programs.map((program) => ({
         ...program,
-        description: trimText(program.description, 120),
+        description: '',
+        thumbnailUrl: stripAssetVersion(program.thumbnailUrl),
       }));
       return reply.code(200).send(normalizedPrograms);
     },
@@ -443,15 +468,23 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedPrograms = programs.map((program) => ({
         ...program,
         description: trimText(program.description, 120),
+        thumbnailUrl: stripAssetVersion(program.thumbnailUrl),
+        channel: {
+          ...program.channel,
+          logoUrl: stripAssetVersion(program.channel.logoUrl),
+        },
         episode: {
           ...program.episode,
           description: trimText(program.episode.description, 160),
+          thumbnailUrl: stripAssetVersion(program.episode.thumbnailUrl),
           series: {
             ...program.episode.series,
             description: trimText(program.episode.series.description, 120),
+            thumbnailUrl: stripAssetVersion(program.episode.series.thumbnailUrl),
             episodes: program.episode.series.episodes.map((seriesEpisode) => ({
               ...seriesEpisode,
               description: trimText(seriesEpisode.description, 96),
+              thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
             })),
           },
         },
@@ -506,15 +539,23 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
       const normalizedProgram = {
         ...program,
         description: trimText(program.description, 120),
+        thumbnailUrl: stripAssetVersion(program.thumbnailUrl),
+        channel: {
+          ...program.channel,
+          logoUrl: stripAssetVersion(program.channel.logoUrl),
+        },
         episode: {
           ...program.episode,
           description: trimText(program.episode.description, 160),
+          thumbnailUrl: stripAssetVersion(program.episode.thumbnailUrl),
           series: {
             ...program.episode.series,
             description: trimText(program.episode.series.description, 120),
+            thumbnailUrl: stripAssetVersion(program.episode.series.thumbnailUrl),
             episodes: program.episode.series.episodes.map((seriesEpisode) => ({
               ...seriesEpisode,
               description: trimText(seriesEpisode.description, 96),
+              thumbnailUrl: stripAssetVersion(seriesEpisode.thumbnailUrl),
             })),
           },
         },
@@ -581,6 +622,7 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
                   ...item.series,
                   description: '',
                   episodes: [],
+                  thumbnailUrl: stripAssetVersion(item.series.thumbnailUrl),
                 },
           episode:
             item.episode == null
@@ -588,10 +630,12 @@ export async function registerApi(app: FastifyInstance): Promise<void> {
               : {
                   ...item.episode,
                   description: trimText(item.episode.description, 96),
+                  thumbnailUrl: stripAssetVersion(item.episode.thumbnailUrl),
                   series: {
                     ...item.episode.series,
                     description: '',
                     episodes: [],
+                    thumbnailUrl: stripAssetVersion(item.episode.series.thumbnailUrl),
                   },
                 },
         })),
