@@ -52,6 +52,6 @@ export const createTimetablePageStoreSlice = () => {
         selectedProgramId: program?.id ?? null,
       }));
     },
-    shownNewFeatureDialog: true,
+    shownNewFeatureDialog: false,
   }));
 };

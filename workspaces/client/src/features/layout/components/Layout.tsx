@@ -1,6 +1,5 @@
 import classNames from 'classnames';
 import { lazy, ReactNode, Suspense, useEffect, useState } from 'react';
-import { Flipper } from 'react-flip-toolkit';
 import { Link, useLocation, useNavigation } from 'react-router';
 
 import { AuthDialogType } from '@wsh-2025/client/src/features/auth/constants/auth_dialog_type';
@@ -64,7 +63,17 @@ export const Layout = ({ children }: Props) => {
 
   return (
     <>
-      <div className="grid h-auto min-h-[100vh] w-full grid-cols-[188px_minmax(0,1fr)] grid-rows-[80px_calc(100vh-80px)_minmax(0,1fr)] flex-col [grid-template-areas:'a1_b1''a2_b2''a3_b3']">
+      <div
+        className="grid h-auto min-h-[100vh] w-full grid-cols-[188px_minmax(0,1fr)] grid-rows-[80px_calc(100vh-80px)_minmax(0,1fr)] flex-col [grid-template-areas:'a1_b1''a2_b2''a3_b3']"
+        style={{
+          display: 'grid',
+          gridTemplateAreas: "'a1 b1' 'a2 b2' 'a3 b3'",
+          gridTemplateColumns: '188px minmax(0, 1fr)',
+          gridTemplateRows: '80px calc(100vh - 80px) minmax(0, 1fr)',
+          minHeight: '100vh',
+          width: '100%',
+        }}
+      >
         <header
           className={classNames(
             'sticky top-[0px] z-10 order-1 flex h-[80px] w-full flex-row [grid-area:a1/a1/b1/b1]',
@@ -72,6 +81,15 @@ export const Layout = ({ children }: Props) => {
               ? 'bg-gradient-to-b from-[#171717] to-transparent'
               : 'bg-gradient-to-b from-[#171717] to-[#171717]',
           )}
+          style={{
+            display: 'flex',
+            gridArea: 'a1 / a1 / b1 / b1',
+            height: 80,
+            position: 'sticky',
+            top: 0,
+            width: '100%',
+            zIndex: 10,
+          }}
         >
           <Link className="block flex w-[188px] items-center justify-center px-[8px]" to="/">
             <img
@@ -85,7 +103,17 @@ export const Layout = ({ children }: Props) => {
           </Link>
         </header>
 
-        <aside className="sticky top-[0px] flex h-[100vh] flex-col items-center bg-[#171717] pt-[80px] [grid-area:a1/a1/a2/a2]">
+        <aside
+          className="sticky top-[0px] flex h-[100vh] flex-col items-center bg-[#171717] pt-[80px] [grid-area:a1/a1/a2/a2]"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gridArea: 'a1 / a1 / a2 / a2',
+            height: '100vh',
+            position: 'sticky',
+            top: 0,
+          }}
+        >
           <nav>
             <button
               className="block flex h-[56px] w-[188px] items-center justify-center bg-transparent pb-[8px] pl-[20px] pr-[8px] pt-[8px]"
@@ -118,10 +146,11 @@ export const Layout = ({ children }: Props) => {
           </nav>
         </aside>
 
-        <main className={isTimetablePage ? '[grid-area:b2]' : '[grid-area:b2/b2/b3/b3]'}>
-          <Flipper className="size-full" flipKey={location.key} spring="noWobble">
-            {children}
-          </Flipper>
+        <main
+          className={isTimetablePage ? '[grid-area:b2]' : '[grid-area:b2/b2/b3/b3]'}
+          style={{ gridArea: isTimetablePage ? 'b2' : 'b2 / b2 / b3 / b3' }}
+        >
+          <div className="size-full">{children}</div>
         </main>
 
         {isLoading ? (
